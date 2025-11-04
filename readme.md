@@ -125,7 +125,7 @@ docker compose exec php composer test
 
 - Create a migration (using CodeIgniter's spark tool):
 ```cmd
-docker compose exec php php spark make:migration CreateUsersTabel
+docker compose exec php php spark make:migration CreateUsersTable
 ```
 
 - Create a model (using CodeIgniter's spark tool):
