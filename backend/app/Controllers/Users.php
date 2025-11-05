@@ -26,4 +26,8 @@ class Users extends BaseController
     {
         return view('user/roadmap');
     }
+    public function dashboard(): string
+    {
+        return view('admin/dashboard');
+    }
 }
