@@ -34,4 +34,8 @@ class Users extends BaseController
     {
         return view('admin/services');
     }
+    public function accounts(): string
+    {
+        return view('admin/accounts');
+    }
 }
