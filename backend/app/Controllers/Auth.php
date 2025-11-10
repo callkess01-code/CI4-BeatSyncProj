@@ -18,9 +18,16 @@ class Auth extends BaseController
     {
         $session = session();
 
-        // If already logged in, redirect to appropriate page
+        // ✅ FIXED: Check if already logged in and redirect based on user type
         if ($session->has('user')) {
-            return redirect()->to('/admin/dashboard');
+            $userType = $session->get('user')['type'] ?? 'client';
+
+            if ($userType === 'admin') {
+                return redirect()->to('/admin/dashboard');
+            }
+
+            // Default redirect for clients
+            return redirect()->to('/');
         }
 
         // Get any error messages or old input from previous attempt
@@ -56,22 +63,9 @@ class Auth extends BaseController
         // Create Validation Rules
         // ========================================
 
-        // Here i created rules for email and password
         $validation = \Config\Services::validation();
-
-        // Variable comes from the html the id from the input
-        // Format: variable, human readable name, rules seperated by |
-        // So this following rule means variable email is Email which means it should not be null and has valid email format
         $validation->setRule('email', 'Email', 'required|valid_email');
-
-        // The following rule means variable password, named Password and it should not be null
         $validation->setRule('password', 'Password', 'required');
-
-        // Other Rules you can use:
-        // min_length[6]
-        // max_length[100]
-        // permit_empty
-        // matches[password_confirm]
 
         // ========================================
         // Transfer post data to variable
@@ -80,12 +74,10 @@ class Auth extends BaseController
         $post = $request->getPost();
 
         // ========================================
-        // If validation of data email and password are not valid 
-        // then trigger to return the input in variable to input element in html 
-        // and set validation error message
+        // Validate data
         // ========================================
 
-        if (! $validation->run($post)) {
+        if (!$validation->run($post)) {
             $session->setFlashdata('errors', $validation->getErrors());
             $session->setFlashdata('old', $post);
             return redirect()->back()->withInput();
@@ -105,11 +97,10 @@ class Auth extends BaseController
         $user = $userModel->where('email', $email)->first();
 
         // ========================================
-        // Condition that there should be return value 
-        // which means user is registered
+        // Check if user exists
         // ========================================
 
-        if (! $user) {
+        if (!$user) {
             $session->setFlashdata('errors', ['email' => 'No account found for that email']);
             $session->setFlashdata('old', ['email' => $email]);
             return redirect()->back()->withInput();
@@ -122,48 +113,81 @@ class Auth extends BaseController
         $userArr = is_array($user) ? $user : (method_exists($user, 'toArray') ? $user->toArray() : (array) $user);
 
         // ========================================
-        // Condition to check using hash the password
+        // Verify password
         // ========================================
 
-        if (! password_verify($request->getPost('password'), $userArr['password_hash'] ?? '')) {
+        if (!password_verify($request->getPost('password'), $userArr['password_hash'] ?? '')) {
             $session->setFlashdata('errors', ['password' => 'Incorrect password']);
             $session->setFlashdata('old', ['email' => $email]);
             return redirect()->back()->withInput();
         }
 
         // ========================================
-        // Create a session making sure the user is logged in
+        // ✅ FIXED: Check account status
         // ========================================
+
+        $accountStatus = $userArr['account_status'] ?? 'inactive';
+        if ($accountStatus !== 'active') {
+            $statusMessages = [
+                'inactive' => 'Your account is inactive. Please contact support.',
+                'suspended' => 'Your account has been suspended. Please contact support.',
+                'pending' => 'Your account is pending verification.'
+            ];
+
+            $session->setFlashdata('errors', [
+                'account' => $statusMessages[$accountStatus] ?? 'Account access denied'
+            ]);
+            $session->setFlashdata('old', ['email' => $email]);
+            return redirect()->back()->withInput();
+        }
+
+        // ========================================
+        // ✅ FIXED: Create session with proper display name
+        // ========================================
+
+        $firstName = $userArr['first_name'] ?? '';
+        $middleName = $userArr['middle_name'] ?? '';
+        $lastName = $userArr['last_name'] ?? '';
+
+        // Build display name properly
+        $displayName = trim($firstName . ' ' . $lastName);
 
         $session->set('user', [
             'id' => $userArr['id'] ?? null,
             'email' => $userArr['email'] ?? null,
-            'first_name' => $userArr['first_name'] ?? null,
-            'last_name' => $userArr['last_name'] ?? null,
+            'first_name' => $firstName,
+            'middle_name' => $middleName,
+            'last_name' => $lastName,
             'type' => $userArr['user_type'] ?? 'client',
-            'display_name' => trim(($userArr['first_name'][0] ?? '') . ' ' . ($userArr['middle_name'][0] ?? '') . ' ' . ($userArr['last_name'] ?? '')),
+            'display_name' => $displayName,
         ]);
 
         // ========================================
-        // Conditional return depends of the type of user
+        // ✅ FIXED: Conditional redirect based on user type
         // ========================================
 
         $type = strtolower($userArr['user_type'] ?? 'client');
 
+        // Log for debugging
+        log_message('debug', 'User logged in - Type: ' . $type . ', Email: ' . $email);
+
         if ($type === 'admin') {
+            log_message('debug', 'Redirecting to admin dashboard');
             return redirect()->to('/admin/dashboard');
         }
 
         if ($type === 'client') {
+            log_message('debug', 'Redirecting to homepage');
             return redirect()->to('/');
         }
 
         // Default fallback
+        log_message('debug', 'Redirecting to default homepage');
         return redirect()->to('/');
     }
 
     // ============================================
-    // LOGOUT FUNCTION (POST REQUEST)
+    // LOGOUT FUNCTION (GET/POST REQUEST)
     // ============================================
 
     /**
@@ -171,8 +195,16 @@ class Auth extends BaseController
      */
     public function logout()
     {
+        $session = session();
+
+        // Log the logout
+        if ($session->has('user')) {
+            $user = $session->get('user');
+            log_message('debug', 'User logging out: ' . ($user['email'] ?? 'unknown'));
+        }
+
         // Destroy from session
-        session()->destroy();
+        $session->destroy();
 
         // Remove session cookie
         $params = session_get_cookie_params();
@@ -203,6 +235,12 @@ class Auth extends BaseController
 
         // If already logged in, redirect
         if ($session->has('user')) {
+            $userType = $session->get('user')['type'] ?? 'client';
+
+            if ($userType === 'admin') {
+                return redirect()->to('/admin/dashboard');
+            }
+
             return redirect()->to('/');
         }
 
@@ -240,26 +278,25 @@ class Auth extends BaseController
         $validation->setRule('first_name', 'First name', 'required|min_length[2]|max_length[100]');
         $validation->setRule('middle_name', 'Middle name', 'permit_empty|max_length[100]');
         $validation->setRule('last_name', 'Last name', 'required|min_length[2]|max_length[100]');
-        $validation->setRule('email', 'Email', 'required|valid_email');
+        $validation->setRule('email', 'Email', 'required|valid_email|is_unique[users.email]');
         $validation->setRule('password', 'Password', 'required|min_length[6]');
         $validation->setRule('password_confirm', 'Password Confirmation', 'required|matches[password]');
 
         $post = $request->getPost();
 
-        // Error Catchers, Conditions that if not followed will return error messages
-        if (! $validation->run($post)) {
+        // Error Catchers
+        if (!$validation->run($post)) {
             $session->setFlashdata('errors', $validation->getErrors());
             $session->setFlashdata('old', $post);
             return redirect()->back()->withInput();
         }
 
         // ========================================
-        // If all is good now we create and use the data structure coming from model
+        // Check if email already exists (double-check)
         // ========================================
 
         $userModel = new \App\Models\UsersModel();
 
-        // Check if email already exists
         if ($userModel->where('email', $post['email'])->first()) {
             $session->setFlashdata('errors', ['email' => 'This email is already registered']);
             $session->setFlashdata('old', $post);
@@ -267,39 +304,39 @@ class Auth extends BaseController
         }
 
         // ========================================
-        // Now prepare your data. below is an example.
-        // This should be based on data from database table
-        // Make sure that required datas are specified while some should be expecting null so have catcher for it
+        // Prepare data for insertion
         // ========================================
 
         $data = [
             'first_name' => $post['first_name'],
-            'middle_name' => $post['middle_name'] ?? null, // This is the sample for nullable data
+            'middle_name' => $post['middle_name'] ?? null,
             'last_name' => $post['last_name'],
             'email' => $post['email'],
             'password_hash' => password_hash($post['password'], PASSWORD_DEFAULT),
-            'user_type' => 'client',
+            'user_type' => 'client', // Default user type
             'account_status' => 'active',
             'email_verified' => 0,
         ];
 
         // ========================================
-        // Now insert in the database
+        // Insert into database
         // ========================================
 
         $inserted = $userModel->insert($data);
 
         // ========================================
-        // Redirect if success or not
+        // Handle success/failure
         // ========================================
 
         if ($inserted === false) {
+            log_message('error', 'User registration failed: ' . json_encode($userModel->errors()));
             $session->setFlashdata('errors', ['general' => 'Could not create account. Please try again.']);
             $session->setFlashdata('old', $post);
             return redirect()->back()->withInput();
         }
 
-        // Success! Redirect to login with success message
+        // Success! Log and redirect
+        log_message('debug', 'New user registered: ' . $post['email']);
         $session->setFlashdata('success', 'Account created successfully! Please login.');
         return redirect()->to('/login');
     }
