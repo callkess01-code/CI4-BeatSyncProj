@@ -1,273 +1,249 @@
 <?php
 
 /**
- * Component: cards/card_auth.php
- * Layout for login and signup pages
+ * Component: card_auth.php
+ * Authentication card component for login/signup
+ * 
+ * Required props:
+ * - $config: Configuration array
+ * - $fields: Form fields array
  */
 
-// Navigation and footer links (used globally)
-$nav = [
-    ['label' => 'Home', 'href' => '/'],
-    ['label' => 'Events', 'href' => '/'],
-    ['label' => 'Tickets', 'href' => '/tickets']
-];
-
-$config = $config ?? [];
-$fields = $fields ?? [];
+// Extract configuration
 $type = $config['type'] ?? 'login';
-$formId = $type === 'signup' ? 'signupForm' : 'loginForm';
+$title = $config['title'] ?? '';
+$subtitle = $config['subtitle'] ?? '';
+$bgText = $config['bgText'] ?? '';
+$submitButtonText = $config['submitButtonText'] ?? 'Submit';
+$footerText = $config['footerText'] ?? '';
+$footerLinkText = $config['footerLinkText'] ?? '';
+$footerLinkHref = $config['footerLinkHref'] ?? '#';
+
+// ✅ NEW: Get form action and method
+$formAction = $config['formAction'] ?? '';
+$formMethod = $config['formMethod'] ?? 'post';
+
+// ✅ NEW: Get errors and old data
+$errors = $config['errors'] ?? [];
+$old = $config['old'] ?? [];
+$success = $config['success'] ?? null;
+
 ?>
 
-<main class="auth-container">
-    <!-- Header -->
-    <header class="auth-header">
-        <a href="/landing" class="header-logo">
-            <div class="logo-square">
-                <span class="logo-icon">♥</span>
-            </div>
-            <span class="logo-text">BEATSYNC</span>
-        </a>
-        <nav class="header-nav">
-            <?php foreach ($nav as $item): ?>
-                <a href="<?= esc($item['href']) ?>" class="nav-link"><?= esc($item['label']) ?></a>
-            <?php endforeach; ?>
-        </nav>
-    </header>
+<div class="auth-container">
+    <div class="auth-card">
+        <!-- Background Text -->
+        <div class="auth-bg-text"><?= esc($bgText) ?></div>
 
-    <!-- Auth Section -->
-    <section class="auth-section">
+        <!-- Card Content -->
         <div class="auth-content">
-            <!-- Background Text -->
-            <div class="section-bg-text"><?= esc($config['bgText'] ?? 'AUTH') ?></div>
+            <!-- Header -->
+            <div class="auth-header">
+                <h1 class="auth-title"><?= esc($title) ?></h1>
+                <p class="auth-subtitle"><?= esc($subtitle) ?></p>
+            </div>
 
-            <div class="auth-form-card">
-                <div class="auth-header-text">
-                    <h1 class="auth-title"><?= esc($config['title'] ?? 'Welcome') ?></h1>
-                    <p class="auth-subtitle"><?= esc($config['subtitle'] ?? 'Please continue') ?></p>
+            <?php if ($success): ?>
+                <!-- ✅ Success Message -->
+                <div class="alert alert-success">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <?= esc($success) ?>
                 </div>
+            <?php endif; ?>
 
-                <form class="auth-form" id="<?= esc($formId) ?>" method="POST" action="">
-                    <?php foreach ($fields as $field): ?>
-                        <div class="form-group">
+            <?php if (!empty($errors['account']) || !empty($errors['general'])): ?>
+                <!-- ✅ General Error Message -->
+                <div class="alert alert-error">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <?= esc($errors['account'] ?? $errors['general']) ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- ✅ Form with action and method -->
+            <form
+                action="<?= esc($formAction) ?>"
+                method="<?= esc($formMethod) ?>"
+                class="auth-form"
+                novalidate>
+                <?= csrf_field() ?> <!-- ✅ CSRF Protection -->
+
+                <?php foreach ($fields as $field): ?>
+                    <div class="form-group">
+                        <?php if ($field['type'] === 'checkbox'): ?>
+                            <!-- Checkbox Field -->
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    id="<?= esc($field['id']) ?>"
+                                    name="<?= esc($field['name']) ?>"
+                                    value="<?= esc($field['value'] ?? '1') ?>"
+                                    <?= isset($field['checked']) && $field['checked'] ? 'checked' : '' ?>>
+                                <span><?= esc($field['label']) ?></span>
+                            </label>
+                        <?php else: ?>
+                            <!-- Text/Email/Password Fields -->
                             <label for="<?= esc($field['id']) ?>" class="form-label">
                                 <?= esc($field['label']) ?>
                             </label>
 
-                            <?php if (($field['hasToggle'] ?? false) && $field['type'] === 'password'): ?>
-                                <!-- Password field with toggle -->
-                                <div class="password-wrapper">
-                                    <input
-                                        type="password"
-                                        id="<?= esc($field['id']) ?>"
-                                        name="<?= esc($field['name']) ?>"
-                                        class="form-input password-input"
-                                        placeholder="<?= esc($field['placeholder']) ?>"
-                                        <?= ($field['required'] ?? false) ? 'required' : '' ?> />
-                                    <button type="button" class="password-toggle" data-toggle="<?= esc($field['id']) ?>" style="display: none;">
-                                        <!-- Eye Icon SVG -->
-                                        <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                            <circle cx="12" cy="12" r="3"></circle>
-                                        </svg>
-                                        <!-- Eye Off Icon SVG (hidden by default) -->
-                                        <svg class="eye-off-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                            <line x1="1" y1="1" x2="23" y2="23"></line>
-                                        </svg>
-                                    </button>
-                                </div>
-                            <?php else: ?>
-                                <!-- Regular input field -->
+                            <div class="input-wrapper">
                                 <input
                                     type="<?= esc($field['type']) ?>"
                                     id="<?= esc($field['id']) ?>"
                                     name="<?= esc($field['name']) ?>"
-                                    class="form-input"
-                                    placeholder="<?= esc($field['placeholder']) ?>"
-                                    <?= ($field['required'] ?? false) ? 'required' : '' ?> />
+                                    placeholder="<?= esc($field['placeholder'] ?? '') ?>"
+                                    <?= isset($field['required']) && $field['required'] ? 'required' : '' ?>
+                                    value="<?= esc($field['value'] ?? '') ?>"
+                                    class="form-input <?= isset($field['error']) ? 'input-error' : '' ?>"
+                                    aria-invalid="<?= isset($field['error']) ? 'true' : 'false' ?>"
+                                    <?= isset($field['error']) ? 'aria-describedby="' . esc($field['id']) . '-error"' : '' ?>>
+
+                                <?php if (isset($field['hasToggle']) && $field['hasToggle']): ?>
+                                    <!-- Password Toggle -->
+                                    <button
+                                        type="button"
+                                        class="password-toggle"
+                                        onclick="togglePassword('<?= esc($field['id']) ?>')"
+                                        aria-label="Toggle password visibility">
+                                        <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if (isset($field['error'])): ?>
+                                <!-- ✅ Field Error Message -->
+                                <p id="<?= esc($field['id']) ?>-error" class="field-error">
+                                    <?= esc($field['error']) ?>
+                                </p>
                             <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
 
-                    <?= view('components/buttons/button_primary', [
-                        'label' => $config['submitButtonText'] ?? 'Submit'
-                    ]) ?>
-                </form>
+                <!-- Submit Button -->
+                <button type="submit" class="auth-submit-btn">
+                    <?= esc($submitButtonText) ?>
+                </button>
 
-                <div class="auth-footer">
-                    <p class="auth-footer-text">
-                        <?= esc($config['footerText'] ?? '') ?>
-                        <a href="<?= esc($config['footerLinkHref'] ?? '#') ?>" class="link-<?= esc($type === 'login' ? 'signup' : 'login') ?>">
-                            <?= esc($config['footerLinkText'] ?? 'Link') ?>
-                        </a>
-                    </p>
-                </div>
-            </div>
+                <!-- Footer Links -->
+                <?php if ($footerText && $footerLinkText): ?>
+                    <div class="auth-footer">
+                        <p>
+                            <?= esc($footerText) ?>
+                            <a href="<?= base_url($footerLinkHref) ?>" class="auth-link">
+                                <?= esc($footerLinkText) ?>
+                            </a>
+                        </p>
+                    </div>
+                <?php endif; ?>
+            </form>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="auth-page-footer">
-        <p>Copyright © BeatSync. All Rights Reserved</p>
-    </footer>
-</main>
+    </div>
+</div>
 
 <style>
-    /* Reset */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    html {
-        scroll-behavior: smooth;
-    }
-
-    body {
-        font-family: 'Inter', Arial, sans-serif;
-        background-color: #000000;
-        color: #ffffff;
-        line-height: 1.6;
-        overflow-x: hidden;
-    }
-
-    /* Auth Container */
+    /* ============================================
+   AUTH CONTAINER
+   ============================================ */
     .auth-container {
-        display: flex;
-        flex-direction: column;
         min-height: 100vh;
-        width: 100%;
-    }
-
-    /* Header */
-    .auth-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 40px;
-        position: relative;
-        z-index: 100;
-    }
-
-    .header-logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        text-decoration: none;
-    }
-
-    .logo-square {
-        width: 40px;
-        height: 40px;
-        background-color: #ff4057;
-        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 12px rgba(255, 64, 87, 0.3);
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+        padding: 20px;
     }
 
-    .logo-icon {
-        color: #ffffff;
-        font-size: 20px;
-        font-weight: bold;
-    }
-
-    .logo-text {
-        font-family: 'Bebas Neue', Arial, sans-serif;
-        font-size: 24px;
-        font-weight: 400;
-        color: #ffffff;
-        letter-spacing: 1px;
-    }
-
-    .header-nav {
-        display: none;
-        gap: 32px;
-    }
-
-    .nav-link {
-        font-size: 16px;
-        font-weight: 500;
-        color: #ffffff;
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-
-    .nav-link:hover {
-        color: #ff4057;
-    }
-
-    /* Auth Section */
-    .auth-section {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 40px 20px;
+    .auth-card {
         position: relative;
-    }
-
-    /* Content */
-    .auth-content {
-        position: relative;
-        z-index: 10;
         width: 100%;
         max-width: 450px;
-    }
-
-    /* Background Text */
-    .section-bg-text {
-        font-family: 'Bebas Neue', Arial, sans-serif;
-        font-size: clamp(100px, 20vw, 180px);
-        font-weight: 400;
-        color: rgba(255, 255, 255, 0.03);
-        position: absolute;
-        top: -80px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1;
-        letter-spacing: 10px;
-        white-space: nowrap;
-        pointer-events: none;
-        text-align: center;
-    }
-
-    /* Form Card */
-    .auth-form-card {
-        background-color: rgba(24, 24, 24, 0.95);
-        border-radius: 20px;
-        padding: 40px 35px;
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(20px);
+        background: rgba(17, 17, 17, 0.95);
+        border-radius: 16px;
+        padding: 40px;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        position: relative;
-        z-index: 2;
+        overflow: hidden;
     }
 
-    .auth-header-text {
+    .auth-bg-text {
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        font-size: 120px;
+        font-weight: 900;
+        color: rgba(255, 64, 87, 0.05);
+        pointer-events: none;
+        font-family: 'Bebas Neue', Arial, sans-serif;
+    }
+
+    .auth-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ============================================
+   HEADER
+   ============================================ */
+    .auth-header {
         text-align: center;
-        margin-bottom: 35px;
+        margin-bottom: 30px;
     }
 
     .auth-title {
         font-family: 'Bebas Neue', Arial, sans-serif;
-        font-size: clamp(24px, 5vw, 32px);
-        font-weight: 400;
-        color: #ffffff;
-        letter-spacing: 2px;
-        margin-bottom: 10px;
-        line-height: 1.1;
+        font-size: 32px;
+        color: #ff4057;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
     }
 
     .auth-subtitle {
-        font-size: 16px;
-        color: rgba(255, 255, 255, 0.7);
-        font-weight: 400;
+        color: #ccc;
+        font-size: 14px;
     }
 
-    /* Form */
+    /* ============================================
+   ALERTS
+   ============================================ */
+    .alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .alert svg {
+        flex-shrink: 0;
+    }
+
+    .alert-success {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #4ade80;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+    }
+
+    /* ============================================
+   FORM
+   ============================================ */
     .auth-form {
         display: flex;
         flex-direction: column;
@@ -281,160 +257,177 @@ $formId = $type === 'signup' ? 'signupForm' : 'loginForm';
     }
 
     .form-label {
+        color: #fff;
         font-size: 14px;
         font-weight: 500;
-        color: #ffffff;
+    }
+
+    .input-wrapper {
+        position: relative;
     }
 
     .form-input {
         width: 100%;
-        padding: 16px 18px;
-        background-color: rgba(0, 0, 0, 0.4);
-        border: 2px solid rgba(255, 64, 87, 0.4);
-        border-radius: 12px;
-        color: #ffffff;
-        font-size: 16px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 14px;
         transition: all 0.3s ease;
+        outline: none;
     }
 
     .form-input:focus {
-        outline: none;
         border-color: #ff4057;
-        background-color: rgba(0, 0, 0, 0.6);
-        box-shadow: 0 0 0 4px rgba(255, 64, 87, 0.1);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 3px rgba(255, 64, 87, 0.1);
     }
 
-    .form-input::placeholder {
-        color: rgba(255, 255, 255, 0.4);
+    .form-input.input-error {
+        border-color: #ef4444;
     }
 
-    /* Password Wrapper */
-    .password-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
+    .form-input.input-error:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
     }
 
-    .password-wrapper .form-input {
-        padding-right: 50px;
-    }
-
+    /* ============================================
+   PASSWORD TOGGLE
+   ============================================ */
     .password-toggle {
         position: absolute;
-        right: 14px;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
         background: none;
         border: none;
+        color: #999;
         cursor: pointer;
-        padding: 8px;
+        padding: 4px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        transition: opacity 0.3s ease;
-        color: rgba(255, 255, 255, 0.6);
+        transition: color 0.2s ease;
     }
 
     .password-toggle:hover {
-        opacity: 0.8;
-        color: rgba(255, 255, 255, 0.9);
+        color: #ff4057;
     }
 
-    .eye-icon,
-    .eye-off-icon {
-        width: 20px;
-        height: 20px;
+    /* ============================================
+   CHECKBOX
+   ============================================ */
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        color: #ccc;
+        font-size: 14px;
     }
 
-    /* Footer */
+    .checkbox-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    /* ============================================
+   FIELD ERROR
+   ============================================ */
+    .field-error {
+        color: #f87171;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    /* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+    .auth-submit-btn {
+        width: 100%;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, #ff4057 0%, #e63946 100%);
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .auth-submit-btn:hover {
+        background: linear-gradient(135deg, #e63946 0%, #d62839 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 64, 87, 0.4);
+    }
+
+    /* ============================================
+   FOOTER
+   ============================================ */
     .auth-footer {
         text-align: center;
-        margin-top: 28px;
-        padding-top: 24px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .auth-footer-text {
+        margin-top: 20px;
+        color: #999;
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.7);
     }
 
-    .link-login,
-    .link-signup {
+    .auth-link {
         color: #ff4057;
         text-decoration: none;
         font-weight: 600;
-        transition: color 0.3s ease;
+        transition: color 0.2s ease;
     }
 
-    .link-login:hover,
-    .link-signup:hover {
+    .auth-link:hover {
         color: #ff6b7a;
         text-decoration: underline;
     }
 
-    /* Page Footer */
-    .auth-page-footer {
-        padding: 24px;
-        text-align: center;
-        background-color: rgba(0, 0, 0, 0.6);
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .auth-page-footer p {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.6);
-    }
-
-    /* Responsive Design */
-    @media (min-width: 768px) {
-        .auth-header {
-            padding: 24px 60px;
+    /* ============================================
+   RESPONSIVE
+   ============================================ */
+    @media (max-width: 480px) {
+        .auth-card {
+            padding: 30px 20px;
         }
 
-        .header-nav {
-            display: flex;
+        .auth-title {
+            font-size: 24px;
         }
 
-        .auth-content {
-            max-width: 480px;
-        }
-
-        .auth-form-card {
-            padding: 50px 45px;
-        }
-
-        .section-bg-text {
-            font-size: 200px;
-            top: -100px;
-        }
-    }
-
-    @media (max-width: 767px) {
-        .section-bg-text {
-            font-size: 120px;
-            top: -60px;
+        .auth-bg-text {
+            font-size: 80px;
         }
     }
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const passwordInputs = document.querySelectorAll('.password-input');
-        passwordInputs.forEach(input => {
-            const wrapper = input.closest('.password-wrapper');
-            const toggleBtn = wrapper.querySelector('.password-toggle');
-            const eyeIcon = toggleBtn.querySelector('.eye-icon');
-            const eyeOffIcon = toggleBtn.querySelector('.eye-off-icon');
+    /**
+     * Toggle password visibility
+     */
+    function togglePassword(fieldId) {
+        const input = document.getElementById(fieldId);
+        const button = input.parentElement.querySelector('.password-toggle');
 
-            input.addEventListener('input', function() {
-                toggleBtn.style.display = this.value.length > 0 ? 'flex' : 'none';
-            });
-
-            toggleBtn.addEventListener('click', function() {
-                const isHidden = input.type === 'password';
-                input.type = isHidden ? 'text' : 'password';
-                eyeIcon.style.display = isHidden ? 'none' : 'block';
-                eyeOffIcon.style.display = isHidden ? 'block' : 'none';
-            });
-        });
-    });
+        if (input.type === 'password') {
+            input.type = 'text';
+            button.innerHTML = `
+            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+        `;
+        } else {
+            input.type = 'password';
+            button.innerHTML = `
+            <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        `;
+        }
+    }
 </script>
