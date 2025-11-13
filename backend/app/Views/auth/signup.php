@@ -116,6 +116,7 @@ $formFields = [
 <?= view('components/head', ['title' => $pageTitle]) ?>
 
 <body>
+    <?= view('components/header') ?>
     <?php if (!empty($errors['general'])): ?>
         <!-- General Error Message -->
         <div class="alert alert-error">
