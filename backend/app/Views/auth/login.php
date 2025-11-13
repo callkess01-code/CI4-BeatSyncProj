@@ -17,7 +17,7 @@ $authConfig = [
     'submitButtonText' => 'Login',
     'footerText' => "Don't have an account?",
     'footerLinkText' => 'Sign Up',
-    'footerLinkHref' => base_url('signup'),      // ✅ Use base_url() instead of url_to()
+    'footerLinkHref' => 'signup',      // ✅ Use base_url() instead of url_to()
     'formAction' => base_url('login')             // ✅ Use base_url() instead of url_to()
 ];
 
@@ -50,6 +50,7 @@ $formFields = [
 <?= view('components/head', ['title' => $pageTitle]) ?>
 
 <body>
+    <?= view('components/header') ?>
     <!-- Display Success Messages -->
     <?php if (!empty($success)): ?>
         <div class="alert alert-success" style="position: fixed; top: 20px; right: 20px; z-index: 9999; background: #10b981; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
