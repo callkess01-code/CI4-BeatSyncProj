@@ -4,17 +4,17 @@
 <br/>
 
 <div align="center">
-  <a href="https://github.com/zyx-0314/">
-    <img src="./assets/img/nyebe_white.png" alt="Nyebe" width="130" height="100">
+  <a href="https://github.com/callkess01-code">
+    <img src="./assets/img/beatsync.png" alt="Nyebe" width="130" height="100">
   </a>
 <!-- * Title Section -->
-  <h3 align="center">AD - CI4 Template</h3>
+  <h3 align="center">BeatSync - EDM Events Platform</h3>
 </div>
 
 <!-- * Description Section -->
 <div align="center">
-This repository is a beginner-friendly CodeIgniter 4 template.  
-It helps teams quickly bootstrap backend + frontend projects, with simple sample modules that show how to extend the system.
+A modern, responsive web platform designed to showcase EDM events and festivals. Built with CodeIgniter 4, 
+featuring component-based architecture, immersive user experiences, and a comprehensive design system.
 </div>
 
 <br/>
@@ -55,22 +55,23 @@ It helps teams quickly bootstrap backend + frontend projects, with simple sample
 
 ## Overview
 
-This template provides a **minimal CodeIgniter 4 project layout** with conventions for file organization, commit practices, and simple modules.
+BeatSync is a modern, responsive web platform designed to showcase EDM (Electronic Dance Music) events and festivals. The project provides an immersive user experience for discovering upcoming electronic music events, managing user accounts through authentication, and exploring the brand's design system. It features a component-based architecture with reusable PHP fragments, making it easy to maintain and scale.
 
-It is designed to be **easy to start with** and a **reference for adding new features**.
-
-* **Purpose**: a clean starting point for CI4 apps.
-* **Audience**: developers who want a predictable structure and quick onboarding.
+**Target Audience**:
+* **Primary**: EDM music enthusiasts and festival-goers
+* **Secondary**: Event organizers showcasing EDM festivals
+* **Tertiary**: Web developers learning component-based PHP development
 
 ### Key Components
 
-These are **sample modules** included (or suggested) for learning how to add features:
+BeatSync's architecture is built around reusable, maintainable components:
 
-| Component                 | Purpose                                                             | Notes                                                   |
-| ------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------- |
-| **Auth (Sample)**         | Basic login/logout and role check (admin/user).                     | Uses CI4 sessions + MySQL `users` table.                |
-| **CRUD Module**           | Example entity (`Posts` or `Tasks`) with create/read/update/delete. | Demonstrates Controller → Service → Repository pattern. |
-| **Scheduler (Sample)**    | Simple to-do list with due dates.                                   | Shows how to extend with new tables and services.       |
+| Component                 | Purpose                                                             | Features                                                  |
+| ------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Frontend Components**   | Core UI building blocks with consistent design                      | Header, Hero Section, Event Cards, Footer, CTA Components |
+| **Authentication System** | Complete user account management                                    | Login/Signup pages, form validation, password management   |
+| **Event Showcase**        | Dynamic event display system                                        | Grid-based cards, 3D hover effects, dates, locations      |
+| **Design System**         | Brand identity and UI guidelines                                    | Mood board, color palettes, typography, button variations  |
 
  <!-- ! Start simple. Use these modules as **learning samples**; extend or replace them based on your project’s needs. -->
 
