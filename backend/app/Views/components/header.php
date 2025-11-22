@@ -5,16 +5,25 @@
  * Navigation header for BeatSync
  */
 
+$session = session(); // ✅ Use CodeIgniter's session service
+
 $nav = [
     ['label' => 'Home', 'href' => '/'],
     ['label' => 'Events', 'href' => '/'],
     ['label' => 'Tickets', 'href' => '/tickets']
 ];
+
+// Dynamic authentication links
+$isLoggedIn = !empty($session->get('user'));
+$authLinks = $isLoggedIn
+    ? ['label' => 'Logout', 'href' => 'logout']
+    : ['label' => 'Login', 'href' => 'login'];
 ?>
 
 <header class="header">
     <!-- Head Section -->
     <?= view('components/head') ?>
+
     <div class="header-logo">
         <div class="logo-square">
             <span class="logo-icon">♥</span>
@@ -33,13 +42,16 @@ $nav = [
     </nav>
 
     <div class="header-actions">
-        <a href="login" class="login-link">Login</a>
-        <?= view('components/buttons/button_primary', ['label' => 'Sign Up', 'href' => 'signup']) ?>
+        <a href="<?= esc($authLinks['href']) ?>" class="login-link">
+            <?= esc($authLinks['label']) ?>
+        </a>
+
+        <?php if (!$isLoggedIn): ?>
+            <?= view('components/buttons/button_primary', ['label' => 'Sign Up', 'href' => 'signup']) ?>
+        <?php endif; ?>
     </div>
 
     <button class="hamburger" aria-label="Menu" onclick="toggleMobileMenu()">☰</button>
-</header>
-
 </header>
 
 <style>
@@ -154,7 +166,6 @@ $nav = [
         color: #ff4057;
     }
 
-    /* Ensure primary button in header looks like Sign Up */
     .header-actions .btn-primary {
         font-size: 16px;
         font-weight: 600;
@@ -224,3 +235,10 @@ $nav = [
         }
     }
 </style>
+
+<script>
+    function toggleMobileMenu() {
+        const menu = document.querySelector('.nav-menu');
+        menu.classList.toggle('mobile-menu-open');
+    }
+</script>
